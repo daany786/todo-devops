@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Todo App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .card {
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      width: 360px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+
+    h1 {
+      margin: 0 0 20px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      font-size: 14px;
+    }
+
+    button {
+      background: #667eea;
+      border: none;
+      color: white;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    button:hover {
+      background: #5a67d8;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #f5f6fa;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .delete {
+      background: #e53e3e;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    .delete:hover {
+      background: #c53030;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>Todo App</h1>
+
+    <div class="input-group">
+      <input id="todoInput" placeholder="Add a new task" />
+      <button onclick="addTodo()">Add</button>
+    </div>
+
+    <ul id="todoList"></ul>
+  </div>
+
+  <script>
+    async function loadTodos() {
+      const res = await fetch("/todos");
+      const todos = await res.json();
+      const list = document.getElementById("todoList");
+      list.innerHTML = "";
+
+      todos.forEach((todo, index) => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          ${todo}
+          <button class="delete" onclick="deleteTodo(${index})">Delete</button>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    async function addTodo() {
+      const input = document.getElementById("todoInput");
+      if (!input.value) return;
+
+      await fetch("/todos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ todo: input.value })
+      });
+
+      input.value = "";
+      loadTodos();
+    }
+
+    async function deleteTodo(index) {
+      await fetch(`/todos/${index}`, { method: "DELETE" });
+      loadTodos();
+    }
+
+    loadTodos();
+  </script>
+
+</body>
+</html>
