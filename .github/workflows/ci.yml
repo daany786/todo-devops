@@ -15,7 +15,10 @@ jobs:
       - name: Build Docker image
         run: docker build -t todo-app .
 
-      - name: Apply Kubernetes Deployment
+      - name: Apply Kubernetes Deployment & Service
         run: |
           kubectl apply -f k8s-deployment.yaml
           kubectl apply -f k8s-service.yaml
+
+      - name: Restart Deployment to use latest image
+        run: kubectl rollout restart deployment todo-deployment
