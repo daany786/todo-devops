@@ -12,16 +12,30 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build Docker image
+      - name: Build Docker image inside Minikube
         run: |
-          IMAGE_TAG=${GITHUB_SHA}
-          docker build -t todo-app:${IMAGE_TAG} .
-          docker tag todo-app:${IMAGE_TAG} todo-app:latest
+          # 1. Point the shell to Minikube's Docker daemon
+          # This ensures the image is built where Minikube can actually see it
+          eval $(minikube -p minikube docker-env)
 
-      - name: Apply Kubernetes Deployment & Service
+          # 2. Build the image with the unique GitHub SHA tag
+          docker build -t todo-app:${{ github.sha }} .
+          
+          # 3. Also tag it as latest for record keeping
+          docker tag todo-app:${{ github.sha }} todo-app:latest
+
+      - name: Apply Kubernetes Configs
         run: |
           kubectl apply -f k8s-deployment.yaml
           kubectl apply -f k8s-service.yaml
 
-      - name: Restart Deployment to use latest image
-        run: kubectl rollout restart deployment todo-deployment
+      - name: Deploy New Image to Cluster
+        run: |
+          # 4. Explicitly update the deployment to use the new SHA-tagged image.
+          # This is the "magic" command that forces Kubernetes to trigger a rolling update.
+          kubectl set image deployment/todo-deployment todo-container=todo-app:${{ github.sha }}
+
+      - name: Verify Deployment
+        run: |
+          # 5. Wait for the rollout to finish to ensure it's successful
+          kubectl rollout status deployment/todo-deployment
