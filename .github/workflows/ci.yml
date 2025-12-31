@@ -14,9 +14,10 @@ jobs:
 
       - name: Build Docker image inside Minikube
         run: |
-          # 1. Point the shell to Minikube's Docker daemon
-          # This ensures the image is built where Minikube can actually see it
           eval $(minikube -p minikube docker-env)
+          # Use the exact same name/tag format that K8s expects
+          docker build -t todo-app:${{ github.sha }} .
+          docker tag todo-app:${{ github.sha }} todo-app:latest
 
           # 2. Build the image with the unique GitHub SHA tag
           docker build -t todo-app:${{ github.sha }} .
